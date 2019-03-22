@@ -75,9 +75,9 @@ function searchToLatLong(request, response){
 
               let newValues = Object.values(location);
               client.query(newSql, newValues)
-              
+
                 .then( result => {
-                  location.id = result.rows[0].id; 
+                  location.id = result.rows[0].id;
 
                   response.send(location);
                 })
@@ -112,13 +112,13 @@ function searchWeather(request, response){
         response.send(result.rows);
       }else{
         const url = `https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${request.query.data.latitude},${request.query.data.longitude}`;
-        superagent.get(url) 
+        superagent.get(url)
           .then(weatherResults => {
             if(!weatherResults.body.daily.data.length){ throw 'NO DATA'}
             else{
               const weatherSummaries = weatherResults.body.daily.data.map(day =>{
                 let summary = new Weather(day);
-                summary.id = query; 
+                summary.id = query;
 
                 let newSql = `INSERT INTO weathers (forecast, time, location_id) VALUES($1, $2, $3);`;
                 let newValues = Object.values(summary);
@@ -146,14 +146,37 @@ function Weather(day){
 //A function called searchMeetup. Callback function for /meetup path and corresponding constructor function using same structure as search weather function
 //not fully working yet, but we think we're on the right track. Need to figure out what parameters to pass to the group_url to make it access the location
 function searchMeetup(request, response) {
-  const url = `https://api.meetup.com/find/upcoming_events?&sign=true&photo-host=public&lon=${request.query.data.longitude}&page=20&lat=${request.query.data.latitude}&key=${process.env.MEETUP_API_KEY}`
-  return superagent.get(url)
-    .then(meetupResults =>{
-      const meetupSummaries = meetupResults.body.events.map(daily => {
-        let newMeetup = new Meetup(daily);
-        return newMeetup;
-      })
-      response.send(meetupSummaries);
+  let query = request.query.data;
+  let sql = `SELECT * FROM meetups WHERE location_id=$1`
+  let values = [query];
+
+  client.query(sql, values)
+    .then(result=>{
+      console.log('meetup result from sql')
+      if (result.rowCount > 0){
+        response.send(result.rows);
+      } else{
+        const url = `https://api.meetup.com/find/upcoming_events?&sign=true&photo-host=public&lon=${request.query.data.longitude}&page=20&lat=${request.query.data.latitude}&key=${process.env.MEETUP_API_KEY}`
+
+        console.log('meetup result from api');
+        superagent.get(url)
+          .then(meetupResults =>{
+            if(!meetupResults.body.events.length){throw 'NO DATA'}
+            else{
+              const meetupSummaries = meetupResults.body.events.map(daily => {
+                let newMeetup = new Meetup(daily);
+                newMeetup.id = query;
+
+                let newSql = `INSERT INTO meetups (link, name, creation_date, host, location_id) VALUES($1, $2, $3, $4, $5);`;
+                let newValues = Object.values(newMeetup);
+                client.query(newSql, newValues);
+
+                return newMeetup;
+              });
+              response.send(meetupSummaries);
+            }
+          })
+      }
     })
     .catch(error => handleError(error, response));
 }
