@@ -27,7 +27,8 @@ client.on('error', err => console.error(err));
 //location API route
 app.get('/location', searchToLatLong)
 app.get('/weather', searchWeather)
-app.get('/meetups', searchMeetup);
+app.get('/meetups', searchMeetup)
+app.get('/movies', searchMovies);
 
 
 //turn the server on so it will listen
@@ -76,7 +77,6 @@ function searchToLatLong(request, response){
               let newSql = `INSERT INTO locations (search_query, formatted_query, latitude, longitude) VALUES($1, $2, $3, $4) RETURNING id;`;
 
               let newValues = Object.values(location);
-              console.log('💀line', newValues);
               client.query(newSql, newValues)
               
                 .then( result => {
@@ -156,10 +156,8 @@ function searchMeetup(request, response) {
   const url = `https://api.meetup.com/find/upcoming_events?&sign=true&photo-host=public&lon=${request.query.data.longitude}&page=20&lat=${request.query.data.latitude}&key=${process.env.MEETUP_API_KEY}`
   return superagent.get(url)
     .then(meetupResults =>{
-      console.log('THIS IS THE NAME OF THE MEETUP', meetupResults.body.events[0].name)
       const meetupSummaries = meetupResults.body.events.map(daily => {
         let newMeetup = new Meetup(daily);
-        console.log('THIS IS A NEW MEEETUP', newMeetup)
         return newMeetup;
       })
       response.send(meetupSummaries);
@@ -173,4 +171,17 @@ function Meetup(data){
   this.name = data.name;
   this.creation_date = new Date(data.created).toString().slice(0, 15);
   this.host = data.group.name;
+}
+
+//moviedb API
+//searchMovies function
+
+function Movie(data){
+  this.title = data.title;
+  this.released_on = data.release_date;
+  this.total_votes = data.vote_count;
+  this.average_votes = data.vote_average;
+  this.popularity = data.popularity;
+  this.image_url = data.poster_path;
+  this.overview = data.overview;
 }
