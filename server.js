@@ -59,7 +59,6 @@ function searchToLatLong(request, response){
   client.query(sql, values)
     .then(result => {
       if (result.rowCount > 0){
-        console.log('👹LOCATION FROM SQL');
         response.send(result.rows[0]);
 
       }else{
@@ -68,8 +67,6 @@ function searchToLatLong(request, response){
         superagent.get(url)
 
           .then(data =>{
-            console.log('💩LOCATION FROM API');
-
             if(!data.body.results.length){throw 'NO DATA'}
 
             else{
@@ -93,7 +90,6 @@ function searchToLatLong(request, response){
 
 //constructor for location. Takes in query and location, accesses it inside the google maps data object and pulls out info
 function Location(query, location) {
-  console.log('👿 line 96', query);
   this.search_query = query;
   this.formatted_query = location.formatted_address;
   this.latitude = location.geometry.location.lat;
@@ -114,10 +110,8 @@ function searchWeather(request, response){
     .then(result =>{
       if(result.rowCount > 0){
         response.send(result.rows);
-        console.log('from SQL 🎃')
       }else{
         const url = `https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${request.query.data.latitude},${request.query.data.longitude}`;
-        console.log('from API 🤮')
         superagent.get(url) 
           .then(weatherResults => {
             if(!weatherResults.body.daily.data.length){ throw 'NO DATA'}
@@ -152,7 +146,6 @@ function Weather(day){
 //A function called searchMeetup. Callback function for /meetup path and corresponding constructor function using same structure as search weather function
 //not fully working yet, but we think we're on the right track. Need to figure out what parameters to pass to the group_url to make it access the location
 function searchMeetup(request, response) {
-  console.log('You have reached the searchMeetup function')
   const url = `https://api.meetup.com/find/upcoming_events?&sign=true&photo-host=public&lon=${request.query.data.longitude}&page=20&lat=${request.query.data.latitude}&key=${process.env.MEETUP_API_KEY}`
   return superagent.get(url)
     .then(meetupResults =>{
@@ -175,6 +168,21 @@ function Meetup(data){
 
 //moviedb API
 //searchMovies function
+
+function searchMovies(request, response) {
+  const url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&language=en-US&query=${request.query.data}&page=1&include_adult=false`
+  console.log('query request at 174', request.query.data);
+  return superagent.get(url)
+    .then(moviesResults =>{
+
+      const movieSummaries = moviesResults.body.results.map(film =>{
+        let newMovie = new Movie(film);
+        return newMovie;
+      })
+      response.send(movieSummaries);
+    })
+    .catch(error => handleError(error, response));
+}
 
 function Movie(data){
   this.title = data.title;
