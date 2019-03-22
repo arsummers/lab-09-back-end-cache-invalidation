@@ -90,10 +90,20 @@ Estimate of time needed to complete: 45min
 Start time: 9:56
 Driver: Aliya, Navigator: Merry
 
-Finish time: 
+Finish time: 10:39
 
-Actual time needed to complete: 
+Actual time needed to complete: 45 mins
 
+
+#Number and name of feature: Feature 5 - refactor meetups
+Estimate of time needed to complete: 30 min
+
+Start time: 10:41
+Driver: Aliya, Navigator: Merry
+
+Finish time: 11:28
+
+Actual time needed to complete: 50 minutes
 
 #######README from lab 7
 Number and name of feature: Feature#1 Hook-up APIs Estimate of time needed to complete: 30 min
