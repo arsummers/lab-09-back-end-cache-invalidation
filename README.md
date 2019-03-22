@@ -1,7 +1,7 @@
 # lab-09-back-end-cache-invalidation
 
-**Author**: Aliya Summers, Jessica Zuchowski, Bonnie Wang
-**Version**: 1.0.0 (increment the patch/fix version number if you make more commits past your first submission)
+**Author**: Aliya Summers, Jessica Zuchowski, Bonnie Wang, Merry Cimakasky
+**Version**: 2.0.10 (increment the patch/fix version number if you make more commits past your first submission)
 
 ## Overview
 Building a back-end server to host city explorer app.
@@ -83,6 +83,16 @@ Driver: Merry, Navigator: Aliya
 Finish time: 12:56
 
 Actual time needed to complete: 9 mins 
+
+#Number and name of feature: Feature 4 - movies database
+Estimate of time needed to complete: 45min
+
+Start time: 9:56
+Driver: Aliya, Navigator: Merry
+
+Finish time: 
+
+Actual time needed to complete: 
 
 
 #######README from lab 7
