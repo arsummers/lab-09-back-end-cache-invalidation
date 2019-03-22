@@ -146,12 +146,17 @@ function Weather(day){
 //A function called searchMeetup. Callback function for /meetup path and corresponding constructor function using same structure as search weather function
 //not fully working yet, but we think we're on the right track. Need to figure out what parameters to pass to the group_url to make it access the location
 function searchMeetup(request, response) {
+  console.log('hey this works inside 149')
   let query = request.query.data;
   let sql = `SELECT * FROM meetups WHERE location_id=$1`
   let values = [query];
 
   client.query(sql, values)
+  console.log('sql', sql);
+  console.log('values', values);
+  console.log('hey this works inside 155')
     .then(result=>{
+      console.log('hey this works inside 157')
       console.log('meetup result from sql')
       if (result.rowCount > 0){
         response.send(result.rows);
