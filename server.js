@@ -12,7 +12,7 @@ const cors = require('cors');
 const pg = require('pg');
 
 //app setup
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 const app = express();
 app.use(cors());
 
@@ -145,27 +145,26 @@ function Weather(day){
 
 //A function called searchMeetup. Callback function for /meetup path and corresponding constructor function using same structure as search weather function
 //not fully working yet, but we think we're on the right track. Need to figure out what parameters to pass to the group_url to make it access the location
+
 function searchMeetup(request, response) {
-  console.log('hey this works inside 149')
   let query = request.query.data;
   let sql = `SELECT * FROM meetups WHERE location_id=$1`
-  let values = [query];
+  let values = [query.id];
+  console.log('VALUES AT !53', values);
 
-  client.query(sql, values)
-  console.log('sql', sql);
-  console.log('values', values);
-  console.log('hey this works inside 155')
+  client.query(sql, values) 
     .then(result=>{
-      console.log('hey this works inside 157')
-      console.log('meetup result from sql')
+      console.log('IMPORTANT IN 157', result);
       if (result.rowCount > 0){
         response.send(result.rows);
       } else{
         const url = `https://api.meetup.com/find/upcoming_events?&sign=true&photo-host=public&lon=${request.query.data.longitude}&page=20&lat=${request.query.data.latitude}&key=${process.env.MEETUP_API_KEY}`
 
-        console.log('meetup result from api');
+        console.log('THIS IS SUPER IMPORTANT AAAHHHHHH 168');
         superagent.get(url)
           .then(meetupResults =>{
+        console.log('THIS IS SUPER IMPORTANT AAAHHHHHH 171', meetupResults);
+
             if(!meetupResults.body.events.length){throw 'NO DATA'}
             else{
               const meetupSummaries = meetupResults.body.events.map(daily => {
@@ -199,12 +198,11 @@ function Meetup(data){
 
 function searchMovies(request, response) {
   const url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&language=en-US&query=${request.query.data}&page=1&include_adult=false`
-  console.log('query request at 174', request.query.data);
   return superagent.get(url)
     .then(moviesResults =>{
 
       const movieSummaries = moviesResults.body.results.map(film =>{
-        let newMovie = new Movie(film);
+        let newMovie = new Movie(film.id);
         return newMovie;
       })
       response.send(movieSummaries);
