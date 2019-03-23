@@ -36,9 +36,8 @@ app.get('/location', searchToLatLong)
 app.get('/weather', searchWeather)
 app.get('/meetups', searchMeetup)
 app.get('/movies', searchMovies);
-app.get('/yelp', searchYelp); 
-
-app.get('/trails', searchTrails);
+// app.get('/yelp', searchYelp);
+// app.get('/trails', searchTrails);
 
 
 
