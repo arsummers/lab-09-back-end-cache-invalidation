@@ -3,6 +3,7 @@
 // TODO: Cache invalidation for all tables.
 //TODO: add function searchYelp: GET https://api.yelp.com/v3/businesses/search
 //NOTE: constructor needs this.name, this.image, this.price, this.rateing, this.url
+//NOTE: will need to set http auth headders and bearers
 //TODO: add function searchTrails
 //NOTE: constructor needs this.name, this.location, this.length, this.stars, this.summary, this.conditions, this.condition_date, this.condition_time
 //TODO: dry query handler: LOTS of ``
@@ -36,8 +37,8 @@ app.get('/location', searchToLatLong)
 app.get('/weather', searchWeather)
 app.get('/meetups', searchMeetup)
 app.get('/movies', searchMovies);
-// app.get('/yelp', searchYelp);
-// app.get('/trails', searchTrails);
+//app.get('/yelp', searchYelp);
+//app.get('/trails', searchTrails);
 
 
 
