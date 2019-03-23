@@ -152,7 +152,7 @@ function searchMeetup(request, response) {
   let values = [query.id];
   console.log('VALUES AT !53', values);
 
-  client.query(sql, values) 
+  client.query(sql, values)
     .then(result=>{
       console.log('IMPORTANT IN 157', result);
       if (result.rowCount > 0){
@@ -169,7 +169,7 @@ function searchMeetup(request, response) {
             else{
               const meetupSummaries = meetupResults.body.events.map(daily => {
                 let newMeetup = new Meetup(daily);
-                newMeetup.id = query;
+                newMeetup.id = query.id;
 
                 let newSql = `INSERT INTO meetups (link, name, creation_date, host, location_id) VALUES($1, $2, $3, $4, $5);`;
                 let newValues = Object.values(newMeetup);
@@ -197,12 +197,14 @@ function Meetup(data){
 //searchMovies function
 
 function searchMovies(request, response) {
-  const url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&language=en-US&query=${request.query.data}&page=1&include_adult=false`
+  let query = request.data;
+  const url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&language=en-US&query=${query.search_query}&page=1&include_adult=false`
   return superagent.get(url)
     .then(moviesResults =>{
 
       const movieSummaries = moviesResults.body.results.map(film =>{
-        let newMovie = new Movie(film.id);
+        let newMovie = new Movie(film);
+        newMovie.id = query.id;
         return newMovie;
       })
       response.send(movieSummaries);
