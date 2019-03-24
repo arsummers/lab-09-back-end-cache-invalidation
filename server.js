@@ -205,11 +205,12 @@ function Meetup(data) {
 //searchMovies function
 
 function searchMovies(request, response) {
-  // David
+
   let query = request.query.data;
   const url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&language=en-US&query=${query.search_query}&page=1&include_adult=false`;
 
   return superagent.get(url)
+    .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
     .then(moviesResults => {
 
       const movieSummaries = moviesResults.body.results.map(film => {
@@ -232,20 +233,18 @@ function Movie(data) {
   this.overview = data.overview;
 }
 
+
 function searchYelp(request, response) {
-  let query = request.query.data;
-  const yelpUrl =  `https://api.yelp.com/v3/businesses/search?term=delis&latitude=37.786882&longitude=-122.399972s`;
-  $.ajax({
-    url:yelpUrl,
-    headers : {
-      'Authorization': `Bearer ${process.env.YELP_API_KEY}`,
-    }
-  })
-  return superagent.get(yelpUrl)
+  let query = request.query.data.id;
+
+
+  const url= `https://api.yelp.com/v3/businesses/search?latitude=${request.query.data.latitude}&longitude=${request.query.data.longitude}`;
+  superagent.get(url)
+    .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
     .then(yelpResults => {
       const yelpSummaries = yelpResults.body.businesses.map(business =>{
         let newBusiness = new Yelp(business);
-        newBusiness.name = query.name;
+        newBusiness.location_id = query;
         return newBusiness;
       })
       response.send(yelpSummaries)
@@ -255,9 +254,9 @@ function searchYelp(request, response) {
 
 
 function Yelp(data){
-  this.name = data.businesses.name;
-  this.image = data.businesses.image_url;
-  this.prices = data.businesses.price;
-  this.rating = data.businesses.rating;
-  this.url = data.businesses.url;
+  this.name = data.name;
+  this.image = data.image_url;
+  this.prices = data.price;
+  this.rating = data.rating;
+  this.url = data.url;
 }
