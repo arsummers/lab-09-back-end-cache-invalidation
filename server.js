@@ -37,8 +37,8 @@ app.get('/location', searchToLatLong)
 app.get('/weather', searchWeather)
 app.get('/meetups', searchMeetup)
 app.get('/movies', searchMovies);
-//app.get('/yelp', searchYelp);
-//app.get('/trails', searchTrails);
+app.get('/yelp', searchYelp);
+app.get('/trails', searchTrails);
 
 
 
@@ -163,21 +163,16 @@ function searchMeetup(request, response) {
   let query = request.query.data;
   let sql = `SELECT * FROM meetups WHERE location_id=$1`
   let values = [query.id];
-  console.log('VALUES AT !53', values);
 
   client.query(sql, values)
-    .then(result => {
-      console.log('IMPORTANT IN 157', result);
-      if (result.rowCount > 0) {
+    .then(result=>{
+      if (result.rowCount > 0){
         response.send(result.rows);
       } else {
         const url = `https://api.meetup.com/find/upcoming_events?&sign=true&photo-host=public&lon=${request.query.data.longitude}&page=20&lat=${request.query.data.latitude}&key=${process.env.MEETUP_API_KEY}`
 
-        console.log('THIS IS SUPER IMPORTANT AAAHHHHHH 168');
         superagent.get(url)
           .then(meetupResults => {
-            console.log('THIS IS SUPER IMPORTANT AAAHHHHHH 171', meetupResults);
-
             if (!meetupResults.body.events.length) { throw 'NO DATA' }
             else {
               const meetupSummaries = meetupResults.body.events.map(daily => {
@@ -210,7 +205,7 @@ function Meetup(data) {
 //searchMovies function
 
 function searchMovies(request, response) {
-  // David
+
   let query = request.query.data;
   const url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&language=en-US&query=${query.search_query}&page=1&include_adult=false`;
 
@@ -236,3 +231,64 @@ function Movie(data) {
   this.image_url = 'https://image.tmdb.org/t/p/w500' + data.poster_path;
   this.overview = data.overview;
 }
+
+
+function searchYelp(request, response) {
+  let query = request.query.data.id;
+
+
+  const url= `https://api.yelp.com/v3/businesses/search?latitude=${request.query.data.latitude}&longitude=${request.query.data.longitude}`;
+  superagent.get(url)
+    .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
+    .then(yelpResults => {
+      const yelpSummaries = yelpResults.body.businesses.map(business =>{
+        let newBusiness = new Yelp(business);
+        newBusiness.location_id = query;
+        return newBusiness;
+      })
+      response.send(yelpSummaries)
+    })
+    .catch(error => handleError(error, response));
+}
+
+
+function Yelp(data){
+  this.name = data.name;
+  this.image = data.image_url;
+  this.prices = data.price;
+  this.rating = data.rating;
+  this.url = data.url;
+}
+
+console.log('THIS IS RIGHT BEFORE THE  trial FUNCTION')
+function searchTrails(request, response){
+  console.log('THIS IS RIGHT INSIDE THE FUNCTION hike bitch')
+  let query = request.query.data;
+  console.log('QUERY RESULTS AT 265', query);
+  const url = `https://www.hikingproject.com/data/get-trails?lat=${request.query.data.latitude}&lon=${request.query.data.longitude}&maxDistance=10&key=${process.env.HIKING_API_KEY}`;
+
+  return superagent.get(url)
+    .then(trailsResults =>{
+      const trailSummaries = trailsResults.body.trails.map(hike =>{
+        let newTrail = new Trail(hike);
+        newTrail.id = query.id;
+        return newTrail;
+      })
+      response.send(trailSummaries)
+    })
+    .catch(error => handleError(error, response));
+}
+
+function Trail(data){
+  this.name = data.name;
+  this.location = data.location;
+  this.length = data.length;
+  this.stars = data.stars;
+  this.star_votes = data.star_votes;
+  this.summary = data.summary;
+  this.trail_url = data.trail_url;
+  this.conditions = data.conditionDetail;
+  this.condition_date = data.conditionDate;
+}
+
+console.log('END OF DOCUMENT', Trail);

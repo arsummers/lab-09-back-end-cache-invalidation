@@ -154,7 +154,7 @@ javascipt, express, nodemon, CORS, dotenv
 ## Credits and Collaborations
 <!-- Give credit (and a link) to other people or resources that helped you build this application. -->
 base front-end code from codefellows
-
+MASSIVE SHOUTOUT TO JESSE FOR THE YELP API
 -->
 
 Number and name of feature: Feature 1 - Location and Weather
