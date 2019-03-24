@@ -126,7 +126,6 @@ function searchWeather(request, response) {
             const weatherSummaries = weatherResults.body.daily.data.map(day => {
               let summary = new Weather(day);
               summary.id = query;
-
               let newSql = `INSERT INTO weathers (forecast, time, location_id) VALUES($1, $2, $3);`;
               let newValues = Object.values(summary);
               client.query(newSql, newValues);
@@ -171,7 +170,6 @@ function searchMeetup(request, response) {
             const meetupSummaries = meetupResults.body.events.map(daily => {
               let newMeetup = new Meetup(daily);
               newMeetup.id = query.id;
-
               let newSql = `INSERT INTO meetups (link, name, creation_date, host, location_id) VALUES($1, $2, $3, $4, $5);`;
               let newValues = Object.values(newMeetup);
               client.query(newSql, newValues);
@@ -198,7 +196,7 @@ function Meetup(data) {
 
 function searchMovies(request, response){
   let query = request.query.data;
-  let sql = `SELECT * FROM movies WHERE location_id=$1`;
+  let sql = `SELECT * FROM movies WHERE location_id=$1;`;
   let values = [query.id];
 
   client
@@ -210,7 +208,7 @@ function searchMovies(request, response){
       }else{
         const url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&language=en-US&query=${query.search_query}&page=1&include_adult=false`;
 
-        console.log('MOVIE FROM API HHHHHHEEEEEEEEEEEEEEYYYYYYYYYYYYY')
+        console.log('MOVIE FROM API')
         superagent.get(url).then(movieResults =>{
           if (!movieResults.body.results.length){
             throw 'NO DATA';
@@ -218,7 +216,7 @@ function searchMovies(request, response){
             const movieSummaries = movieResults.body.results.map(film => {
               let newMovie = new Movie(film);
               newMovie.id=query.id;
-              let newSql = `INSERT INTO movies (title, released_on, total_votes, average_votes, popularity, image_url, overview) VALUES ($1, $2, $3, $4, $5, $6, $7);`;
+              let newSql = `INSERT INTO movies (title, released_on, total_votes, average_votes, popularity, image_url,overview, location_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`;
               let newValues = Object.values(newMovie);
               client.query(newSql, newValues);
               return newMovie;
@@ -237,7 +235,7 @@ function Movie(data) {
   this.total_votes = data.vote_count;
   this.average_votes = data.vote_average;
   this.popularity = data.popularity;
-  this.image_url = 'https://image.tmdb.org/t/p/w500' + data.poster_path;
+  this.image_url = `https://image.tmdb.org/t/p/w500${data.poster_path}`;
   this.overview = data.overview;
 }
 
