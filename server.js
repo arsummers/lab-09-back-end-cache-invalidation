@@ -37,7 +37,7 @@ app.get('/location', searchToLatLong)
 app.get('/weather', searchWeather)
 app.get('/meetups', searchMeetup)
 app.get('/movies', searchMovies);
-//app.get('/yelp', searchYelp);
+app.get('/yelp', searchYelp);
 //app.get('/trails', searchTrails);
 
 
@@ -163,21 +163,16 @@ function searchMeetup(request, response) {
   let query = request.query.data;
   let sql = `SELECT * FROM meetups WHERE location_id=$1`
   let values = [query.id];
-  console.log('VALUES AT !53', values);
 
   client.query(sql, values)
     .then(result=>{
-      console.log('IMPORTANT IN 157', result);
       if (result.rowCount > 0){
         response.send(result.rows);
       } else {
         const url = `https://api.meetup.com/find/upcoming_events?&sign=true&photo-host=public&lon=${request.query.data.longitude}&page=20&lat=${request.query.data.latitude}&key=${process.env.MEETUP_API_KEY}`
 
-        console.log('THIS IS SUPER IMPORTANT AAAHHHHHH 168');
         superagent.get(url)
           .then(meetupResults => {
-            console.log('THIS IS SUPER IMPORTANT AAAHHHHHH 171', meetupResults);
-
             if (!meetupResults.body.events.length) { throw 'NO DATA' }
             else {
               const meetupSummaries = meetupResults.body.events.map(daily => {
@@ -235,4 +230,34 @@ function Movie(data) {
   this.popularity = data.popularity;
   this.image_url = 'https://image.tmdb.org/t/p/w500' + data.poster_path;
   this.overview = data.overview;
+}
+
+function searchYelp(request, response) {
+  let query = request.query.data;
+  const yelpUrl =  `https://api.yelp.com/v3/businesses/search?term=delis&latitude=37.786882&longitude=-122.399972s`;
+  $.ajax({
+    url:yelpUrl,
+    headers : {
+      'Authorization': `Bearer ${process.env.YELP_API_KEY}`,
+    }
+  })
+  return superagent.get(yelpUrl)
+    .then(yelpResults => {
+      const yelpSummaries = yelpResults.body.businesses.map(business =>{
+        let newBusiness = new Yelp(business);
+        newBusiness.name = query.name;
+        return newBusiness;
+      })
+      response.send(yelpSummaries)
+    })
+    .catch(error => handleError(error, response));
+}
+
+
+function Yelp(data){
+  this.name = data.businesses.name;
+  this.image = data.businesses.image_url;
+  this.prices = data.businesses.price;
+  this.rating = data.businesses.rating;
+  this.url = data.businesses.url;
 }
