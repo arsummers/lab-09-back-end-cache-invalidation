@@ -38,7 +38,7 @@ app.get('/weather', searchWeather)
 app.get('/meetups', searchMeetup)
 app.get('/movies', searchMovies);
 app.get('/yelp', searchYelp);
-//app.get('/trails', searchTrails);
+app.get('/trails', searchTrails);
 
 
 
@@ -210,7 +210,6 @@ function searchMovies(request, response) {
   const url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&language=en-US&query=${query.search_query}&page=1&include_adult=false`;
 
   return superagent.get(url)
-    .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
     .then(moviesResults => {
 
       const movieSummaries = moviesResults.body.results.map(film => {
@@ -260,3 +259,36 @@ function Yelp(data){
   this.rating = data.rating;
   this.url = data.url;
 }
+
+console.log('THIS IS RIGHT BEFORE THE  trial FUNCTION')
+function searchTrails(request, response){
+  console.log('THIS IS RIGHT INSIDE THE FUNCTION hike bitch')
+  let query = request.query.data;
+  console.log('QUERY RESULTS AT 265', query);
+  const url = `https://www.hikingproject.com/data/get-trails?lat=${request.query.data.latitude}&lon=${request.query.data.longitude}&maxDistance=10&key=${process.env.HIKING_API_KEY}`;
+
+  return superagent.get(url)
+    .then(trailsResults =>{
+      const trailSummaries = trailsResults.body.trails.map(hike =>{
+        let newTrail = new Trail(hike);
+        newTrail.id = query.id;
+        return newTrail;
+      })
+      response.send(trailSummaries)
+    })
+    .catch(error => handleError(error, response));
+}
+
+function Trail(data){
+  this.name = data.name;
+  this.location = data.location;
+  this.length = data.length;
+  this.stars = data.stars;
+  this.star_votes = data.star_votes;
+  this.summary = data.summary;
+  this.trail_url = data.trail_url;
+  this.conditions = data.conditionDetail;
+  this.condition_date = data.conditionDate;
+}
+
+console.log('END OF DOCUMENT', Trail);
