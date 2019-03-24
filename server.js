@@ -1,5 +1,6 @@
 'use strict';
-
+//TODO: refactor Yelp
+//TODO: refactor trails
 // TODO: Cache invalidation for all tables.
 //TODO: get Yelp image working
 //TODO: split time string for trails
@@ -206,8 +207,9 @@ function searchMovies(request, response){
         console.log('MOVIE FROM SQL')
         response.send(result.rows);
       }else{
+        console.log(process.env.MOVIE_API_KEY)
         const url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&language=en-US&query=${query.search_query}&page=1&include_adult=false`;
-
+        console.log(url)
         console.log('MOVIE FROM API')
         superagent.get(url).then(movieResults =>{
           if (!movieResults.body.results.length){
@@ -269,11 +271,7 @@ function Yelp(data) {
 
 function searchTrails(request, response) {
   let query = request.query.data;
-  const url = `https://www.hikingproject.com/data/get-trails?lat=${
-    request.query.data.latitude
-  }&lon=${request.query.data.longitude}&maxDistance=10&key=${
-    process.env.HIKING_API_KEY
-  }`;
+  const url = `https://www.hikingproject.com/data/get-trails?lat=${request.query.data.latitude}&lon=${request.query.data.longitude}&maxDistance=10&key=${process.env.HIKING_API_KEY}`;
 
   return superagent
     .get(url)
