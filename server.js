@@ -241,25 +241,60 @@ function Movie(data) {
   this.overview = data.overview;
 }
 
-function searchYelp(request, response) {
-  let query = request.query.data.id;
+function searchYelp(request, response){
+  let query = request.query.data;
+  let sql = `SELECT * FROM yelps WHERE location_id=$1`;
+  let values = [query.id];
 
-  const url = `https://api.yelp.com/v3/businesses/search?latitude=${
-    request.query.data.latitude
-  }&longitude=${request.query.data.longitude}`;
-  superagent
-    .get(url)
-    .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
-    .then(yelpResults => {
-      const yelpSummaries = yelpResults.body.businesses.map(business => {
-        let newBusiness = new Yelp(business);
-        newBusiness.location_id = query;
-        return newBusiness;
-      });
-      response.send(yelpSummaries);
+  client
+    .query(sql,values)
+    .then(result =>{
+        console.log(result.rowCount)
+      if(result.rowCount > 0){
+        response.send(result.rows);
+        console.log('🖥CAME FROM SQL')
+      }else{
+        const url = `https://api.yelp.com/v3/businesses/search?latitude=${request.query.data.latitude}&longitude=${request.query.data.longitude}`;
+        console.log('CAME FROM API 📱')
+        superagent
+          .get(url)
+          .set('Authorization',`Bearer ${process.env.YELP_API_KEY}`)
+          .then(yelpResults => {
+            if(!yelpResults.body.businesses.length){
+              throw 'NO DATA';
+            } else {
+              const yelpSummaries = yelpResults.body.businesses.map(business =>{
+                let newBusiness = new Yelp (business);
+                newBusiness.id = query.id;
+                let newSql = `INSERT INTO yelps (name, image, prices, rating, url, location_id) VALUES ($1, $2, $3, $4, $5, $6);`;
+                let newValues = Object.values(newBusiness);
+                client.query(newSql, newValues);
+                return newBusiness;
+              });
+              response.send(yelpSummaries);
+            }
+          });
+      }
     })
-    .catch(error => handleError(error, response));
+    .catch(error=> handleError(error, response));
 }
+
+// function searchYelp(request, response) {
+//   let query = request.query.data.id;
+
+//   superagent
+//     .get(url)
+//     .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
+//     .then(yelpResults => {
+//       const yelpSummaries = yelpResults.body.businesses.map(business => {
+//         let newBusiness = new Yelp(business);
+//         newBusiness.location_id = query;
+//         return newBusiness;
+//       });
+//       response.send(yelpSummaries);
+//     })
+//     .catch(error => handleError(error, response));
+// }
 
 function Yelp(data) {
   this.name = data.name;
