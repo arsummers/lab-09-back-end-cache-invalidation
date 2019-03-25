@@ -313,7 +313,6 @@ function searchYelp(request, response){
                 newBusiness.id = sqlInfo.id;
                 let newSql = `INSERT INTO yelps (name, image, prices, rating, url, created_at, location_id) VALUES ($1, $2, $3, $4, $5, $6, $7);`;
 
-                console.log(newBusiness.image);
                 let newValues = Object.values(newBusiness);
                 client.query(newSql, newValues);
 
