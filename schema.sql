@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS meetups (
   name VARCHAR(255),
   creation_date VARCHAR(255),
   host VARCHAR(255),
+  created_at VARCHAR(255),
   location_id INTEGER NOT NULL,
   FOREIGN KEY (location_id) REFERENCES locations(id)
 );
