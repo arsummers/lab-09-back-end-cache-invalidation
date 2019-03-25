@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS trails (
   trail_url VARCHAR(255),
   conditions TEXT,
   condition_date VARCHAR(50),
+  created_at VARCHAR(255),
   location_id INTEGER NOT NULL,
   FOREIGN KEY (location_id) REFERENCES locations(id)
 );

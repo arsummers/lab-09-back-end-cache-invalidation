@@ -293,13 +293,6 @@ function Movie(data) {
 }
 
 function searchYelp(request, response){
-  // let query = request.query.data;
-  // let sql = `SELECT * FROM yelps WHERE location_id=$1`;
-  // let values = [query.id];
-
-  // client
-  //   .query(sql,values)
-
   let sqlInfo = {
     id: request.query.data.id,
     endpoint: 'yelp',
@@ -348,27 +341,38 @@ function Yelp(data) {
 }
 
 function searchTrails(request, response){
-  let query = request.query.data;
-  let sql = `SELECT * FROM trails WHERE location_id=$1`;
-  let values = [query.id];
+  // let query = request.query.data;
+  // let sql = `SELECT * FROM trails WHERE location_id=$1`;
+  // let values = [query.id];
 
-  client
-    .query(sql, values)
+  // client
+  //   .query(sql, values)
+
+  let sqlInfo ={
+    id:request.query.data.id,
+    endpoint: 'trail',
+  }
+
+  getData(sqlInfo)
+    .then(data => checkTimeouts(sqlInfo, data))
     .then(result =>{
-      if(result.rowCount > 0){
+      if(result){
         response.send(result.rows);
       }else{
         const url = `https://www.hikingproject.com/data/get-trails?lat=${request.query.data.latitude}&lon=${request.query.data.longitude}&maxDistance=10&key=${process.env.HIKING_API_KEY}`;
+
         superagent.get(url).then(trailsResults => {
           if(!trailsResults.body.trails.length){
             throw 'NO DATA';
           }else{
             const trailSummaries = trailsResults.body.trails.map(hike =>{
               let newTrail = new Trail(hike);
-              newTrail.id = query.id
-              let newSql = `INSERT INTO trails(name, location, length, stars, star_votes, summary, trail_url, conditions, condition_date, location_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`;
+              newTrail.id = sqlInfo.id;
+              let newSql = `INSERT INTO trails(name, location, length, stars, star_votes, summary, trail_url, conditions, condition_date, created_at, location_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);`;
+
               let newValues = Object.values(newTrail);
               client.query(newSql, newValues);
+
               return newTrail;
             });
             response.send(trailSummaries);
@@ -389,4 +393,5 @@ function Trail(data) {
   this.trail_url = data.trail_url;
   this.conditions = data.conditionDetail;
   this.condition_date = data.conditionDate;
+  this.created_at = Date.now();
 }
