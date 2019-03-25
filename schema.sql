@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS movies (
   popularity VARCHAR(255),
   image_url VARCHAR(255),
   overview TEXT,
+  created_at VARCHAR(255),
   location_id INTEGER NOT NULL,
   FOREIGN KEY (location_id) REFERENCES locations(id)
 );

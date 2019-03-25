@@ -243,27 +243,38 @@ function Meetup(data) {
 //searchMovies function
 
 function searchMovies(request, response){
-  let query = request.query.data;
-  let sql = `SELECT * FROM movies WHERE location_id=$1;`;
-  let values = [query.id];
+  // let query = request.query.data;
+  // let sql = `SELECT * FROM movies WHERE location_id=$1;`;
+  // let values = [query.id];
 
-  client
-    .query(sql, values)
+  // client
+  let sqlInfo = {
+    id: request.query.data.id,
+    endpoint: 'movie',
+  }
+
+  //.query(sql, values)
+  getData(sqlInfo)
+    .then(data => checkTimeouts(sqlInfo, data))
     .then(result => {
-      if(result.rowCount > 0){
-        response.send(result.rows);
-      }else{
-        const url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&language=en-US&query=${query.search_query}&page=1&include_adult=false`;
+      if (result) {
+        response.send(result.rows)
+      }
+      else {
+        const url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&language=en-US&query=${request.query.data.search_query}&page=1&include_adult=false`;
+
         superagent.get(url).then(movieResults =>{
           if (!movieResults.body.results.length){
             throw 'NO DATA';
           }else{
             const movieSummaries = movieResults.body.results.map(film => {
               let newMovie = new Movie(film);
-              newMovie.id=query.id;
-              let newSql = `INSERT INTO movies (title, released_on, total_votes, average_votes, popularity, image_url,overview, location_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`;
+              newMovie.id=sqlInfo.id;
+
+              let newSql = `INSERT INTO movies (title, released_on, total_votes, average_votes, popularity, image_url,overview, created_at, location_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`;
               let newValues = Object.values(newMovie);
               client.query(newSql, newValues);
+
               return newMovie;
             });
             response.send(movieSummaries);
@@ -282,6 +293,7 @@ function Movie(data) {
   this.popularity = data.popularity;
   this.image_url = `https://image.tmdb.org/t/p/w500${data.poster_path}`;
   this.overview = data.overview;
+  this.created_at = Date.now();
 }
 
 function searchYelp(request, response){
