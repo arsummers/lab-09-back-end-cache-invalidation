@@ -1,5 +1,6 @@
 'use strict';
-
+//TODO: refactor Yelp
+//TODO: refactor trails
 // TODO: Cache invalidation for all tables.
 //TODO: get Yelp image working
 //TODO: split time string for trails
@@ -206,8 +207,9 @@ function searchMovies(request, response){
         console.log('MOVIE FROM SQL')
         response.send(result.rows);
       }else{
+        console.log(process.env.MOVIE_API_KEY)
         const url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&language=en-US&query=${query.search_query}&page=1&include_adult=false`;
-
+        console.log(url)
         console.log('MOVIE FROM API')
         superagent.get(url).then(movieResults =>{
           if (!movieResults.body.results.length){
@@ -239,25 +241,60 @@ function Movie(data) {
   this.overview = data.overview;
 }
 
-function searchYelp(request, response) {
-  let query = request.query.data.id;
+function searchYelp(request, response){
+  let query = request.query.data;
+  let sql = `SELECT * FROM yelps WHERE location_id=$1`;
+  let values = [query.id];
 
-  const url = `https://api.yelp.com/v3/businesses/search?latitude=${
-    request.query.data.latitude
-  }&longitude=${request.query.data.longitude}`;
-  superagent
-    .get(url)
-    .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
-    .then(yelpResults => {
-      const yelpSummaries = yelpResults.body.businesses.map(business => {
-        let newBusiness = new Yelp(business);
-        newBusiness.location_id = query;
-        return newBusiness;
-      });
-      response.send(yelpSummaries);
+  client
+    .query(sql,values)
+    .then(result =>{
+        console.log(result.rowCount)
+      if(result.rowCount > 0){
+        response.send(result.rows);
+        console.log('🖥CAME FROM SQL')
+      }else{
+        const url = `https://api.yelp.com/v3/businesses/search?latitude=${request.query.data.latitude}&longitude=${request.query.data.longitude}`;
+        console.log('CAME FROM API 📱')
+        superagent
+          .get(url)
+          .set('Authorization',`Bearer ${process.env.YELP_API_KEY}`)
+          .then(yelpResults => {
+            if(!yelpResults.body.businesses.length){
+              throw 'NO DATA';
+            } else {
+              const yelpSummaries = yelpResults.body.businesses.map(business =>{
+                let newBusiness = new Yelp (business);
+                newBusiness.id = query.id;
+                let newSql = `INSERT INTO yelps (name, image, prices, rating, url, location_id) VALUES ($1, $2, $3, $4, $5, $6);`;
+                let newValues = Object.values(newBusiness);
+                client.query(newSql, newValues);
+                return newBusiness;
+              });
+              response.send(yelpSummaries);
+            }
+          });
+      }
     })
-    .catch(error => handleError(error, response));
+    .catch(error=> handleError(error, response));
 }
+
+// function searchYelp(request, response) {
+//   let query = request.query.data.id;
+
+//   superagent
+//     .get(url)
+//     .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
+//     .then(yelpResults => {
+//       const yelpSummaries = yelpResults.body.businesses.map(business => {
+//         let newBusiness = new Yelp(business);
+//         newBusiness.location_id = query;
+//         return newBusiness;
+//       });
+//       response.send(yelpSummaries);
+//     })
+//     .catch(error => handleError(error, response));
+// }
 
 function Yelp(data) {
   this.name = data.name;
@@ -269,11 +306,7 @@ function Yelp(data) {
 
 function searchTrails(request, response) {
   let query = request.query.data;
-  const url = `https://www.hikingproject.com/data/get-trails?lat=${
-    request.query.data.latitude
-  }&lon=${request.query.data.longitude}&maxDistance=10&key=${
-    process.env.HIKING_API_KEY
-  }`;
+  const url = `https://www.hikingproject.com/data/get-trails?lat=${request.query.data.latitude}&lon=${request.query.data.longitude}&maxDistance=10&key=${process.env.HIKING_API_KEY}`;
 
   return superagent
     .get(url)
