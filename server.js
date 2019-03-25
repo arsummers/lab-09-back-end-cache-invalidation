@@ -19,7 +19,7 @@ const app = express();
 app.use(cors());
 
 //connection to the client
-const client = new pg.Client(process.env.DATABASE_URL);
+const client = new pg.Client(process.env.HEROKU_POSTGRESQL_BLUE_URL);
 client.connect();
 client.on('error', err => console.error(err));
 //to error is human, to err is machine
