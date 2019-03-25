@@ -1,8 +1,6 @@
 'use strict';
-// TODO: Cache invalidation for all tables.
 //TODO: get Yelp image working
 //TODO: split time string for trails
-//TODO: dry query handler: LOTS of ``
 
 //dependencies
 
@@ -42,13 +40,12 @@ app.listen(PORT, () =>
 
 //error handler - it is called and attached to the function for each route
 function handleError(err, res) {
-  console.log('This here is the error function')
   console.error(err);
   if (res)
     res
       .status(500)
       .send(
-        '⚠︎ So terriably sorry, something has gone very wrong and you should turn back. Now! ⚠'
+        '⚠︎ So terribly sorry, something has gone very wrong and you should turn back. Now! ⚠'
       );
 }
 
@@ -116,19 +113,17 @@ function getData(sqlInfo){
 
 //timeouts object
 const timeouts = {
-  weather: 15 * 1000,
-  yelp: 7*1000*60*60*24,
-  movie: 6*30*1000*60*60*24,
-  meetup: 2*1000*60*60,
-  trail: 24*1000*60*60
+  weather: 15 * 1000, //30 minutes
+  yelp: 7*1000*60*60*24, //1 week
+  movie: 6*30*1000*60*60*24, //6 months
+  meetup: 2*1000*60*60, //2 hours
+  trail: 24*1000*60*60 //daily
 };
 
 //timeouts function
 function checkTimeouts(sqlInfo, sqlData){
   if(sqlData.rowCount > 0){
     let resultsAge = (Date.now() - sqlData.rows[0].created_at);
-
-    console.log(sqlInfo.endpoint, ' AGE:', resultsAge);
 
     if (resultsAge > timeouts[sqlInfo.endpoint]){
       let sql = `DELETE FROM ${sqlInfo.endpoint}s WHERE location_id=$1;`;
@@ -318,6 +313,7 @@ function searchYelp(request, response){
                 newBusiness.id = sqlInfo.id;
                 let newSql = `INSERT INTO yelps (name, image, prices, rating, url, created_at, location_id) VALUES ($1, $2, $3, $4, $5, $6, $7);`;
 
+                console.log(newBusiness.image);
                 let newValues = Object.values(newBusiness);
                 client.query(newSql, newValues);
 
@@ -341,12 +337,6 @@ function Yelp(data) {
 }
 
 function searchTrails(request, response){
-  // let query = request.query.data;
-  // let sql = `SELECT * FROM trails WHERE location_id=$1`;
-  // let values = [query.id];
-
-  // client
-  //   .query(sql, values)
 
   let sqlInfo ={
     id:request.query.data.id,
