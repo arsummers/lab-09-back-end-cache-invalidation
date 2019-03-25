@@ -128,6 +128,8 @@ function checkTimeouts(sqlInfo, sqlData){
   if(sqlData.rowCount > 0){
     let resultsAge = (Date.now() - sqlData.rows[0].created_at);
 
+    console.log(sqlInfo.endpoint, ' AGE:', resultsAge);
+
     if (resultsAge > timeouts[sqlInfo.endpoint]){
       let sql = `DELETE FROM ${sqlInfo.endpoint}s WHERE location_id=$1;`;
       let values = [sqlInfo.id];
@@ -193,21 +195,16 @@ function Weather(day) {
 //not fully working yet, but we think we're on the right track. Need to figure out what parameters to pass to the group_url to make it access the location
 
 function searchMeetup(request, response) {
-  // let query = request.query.data;
-  // let sql = `SELECT * FROM meetups WHERE location_id=$1`;
-  // let values = [query.id];
- console.log('YOU ARE NOW ENTERING THE MEETUP ZONE')
- console.log(request.query.data.id)
+
   let sqlInfo = {
     id: request.query.data.id,
     endpoint: 'meetup',
   }
 
   getData(sqlInfo)
- .then(data => checkTimeouts(sqlInfo, data))
-  .then(result => {
-    console.log('YOU HAVE REACHED THE MEETUP FUNCTION THEN RESULT')
-    if (result) {
+    .then(data => checkTimeouts(sqlInfo, data))
+    .then(result => {
+      if (result) {
         response.send(result.rows)}
       else {
         const url = `https://api.meetup.com/find/upcoming_events?&sign=true&photo-host=public&lon=${request.query.data.longitude}&page=20&lat=${request.query.data.latitude}&key=${process.env.MEETUP_API_KEY}`;
@@ -218,14 +215,11 @@ function searchMeetup(request, response) {
           } else {
             const meetupSummaries = meetupResults.body.events.map(daily => {
               let newMeetup = new Meetup(daily);
-              console.log('HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHh')
-              console.log(Object.values(newMeetup))
               newMeetup.id = sqlInfo.id;
 
               let newSql = `INSERT INTO meetups (link, name, creation_date, host, created_at, location_id) VALUES($1, $2, $3, $4, $5, $6);`;
               let newValues = Object.values(newMeetup);
               client.query(newSql, newValues);
-              console.log('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaa');
 
               return newMeetup;
             });
