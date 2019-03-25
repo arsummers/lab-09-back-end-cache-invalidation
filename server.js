@@ -204,13 +204,9 @@ function searchMovies(request, response){
     .query(sql, values)
     .then(result => {
       if(result.rowCount > 0){
-        console.log('MOVIE FROM SQL')
         response.send(result.rows);
       }else{
-        console.log(process.env.MOVIE_API_KEY)
         const url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&language=en-US&query=${query.search_query}&page=1&include_adult=false`;
-        console.log(url)
-        console.log('MOVIE FROM API')
         superagent.get(url).then(movieResults =>{
           if (!movieResults.body.results.length){
             throw 'NO DATA';
@@ -249,13 +245,10 @@ function searchYelp(request, response){
   client
     .query(sql,values)
     .then(result =>{
-        console.log(result.rowCount)
       if(result.rowCount > 0){
         response.send(result.rows);
-        console.log('🖥CAME FROM SQL')
       }else{
         const url = `https://api.yelp.com/v3/businesses/search?latitude=${request.query.data.latitude}&longitude=${request.query.data.longitude}`;
-        console.log('CAME FROM API 📱')
         superagent
           .get(url)
           .set('Authorization',`Bearer ${process.env.YELP_API_KEY}`)
@@ -279,23 +272,6 @@ function searchYelp(request, response){
     .catch(error=> handleError(error, response));
 }
 
-// function searchYelp(request, response) {
-//   let query = request.query.data.id;
-
-//   superagent
-//     .get(url)
-//     .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
-//     .then(yelpResults => {
-//       const yelpSummaries = yelpResults.body.businesses.map(business => {
-//         let newBusiness = new Yelp(business);
-//         newBusiness.location_id = query;
-//         return newBusiness;
-//       });
-//       response.send(yelpSummaries);
-//     })
-//     .catch(error => handleError(error, response));
-// }
-
 function Yelp(data) {
   this.name = data.name;
   this.image = data.image_url;
@@ -304,22 +280,55 @@ function Yelp(data) {
   this.url = data.url;
 }
 
-function searchTrails(request, response) {
+function searchTrails(request, response){
   let query = request.query.data;
-  const url = `https://www.hikingproject.com/data/get-trails?lat=${request.query.data.latitude}&lon=${request.query.data.longitude}&maxDistance=10&key=${process.env.HIKING_API_KEY}`;
+  let sql = `SELECT * FROM trails WHERE location_id=$1`;
+  let values = [query.id];
 
-  return superagent
-    .get(url)
-    .then(trailsResults => {
-      const trailSummaries = trailsResults.body.trails.map(hike => {
-        let newTrail = new Trail(hike);
-        newTrail.id = query.id;
-        return newTrail;
-      });
-      response.send(trailSummaries);
+  client
+    .query(sql, values)
+    .then(result =>{
+      if(result.rowCount > 0){
+        console.log('🦇SQL', sql, values)
+        response.send(result.rows);
+      }else{
+        const url = `https://www.hikingproject.com/data/get-trails?lat=${request.query.data.latitude}&lon=${request.query.data.longitude}&maxDistance=10&key=${process.env.HIKING_API_KEY}`;
+        superagent.get(url).then(trailsResults => {
+          console.log('🦉API', trailsResults.body)
+          if(!trailsResults.body.trails.length){
+            throw 'NO DATA';
+          }else{
+            const trailSummaries = trailsResults.body.trails.map(hike =>{
+              let newTrail = new Trail(hike);
+              newTrail.id = query.id
+              let newSql = `INSERT INTO trails(name, location, length, stars, star_votes, summary, trail_url, conditions, condition_date, location_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`;
+              let newValues = Object.values(newTrail);
+              client.query(newSql, newValues);
+              return newTrail;
+            });
+            response.send(trailSummaries);
+          }
+        });
+      }
     })
     .catch(error => handleError(error, response));
 }
+
+// function searchTrails(request, response) {
+//   let query = request.query.data;
+
+//   return superagent
+//     .get(url)
+//     .then(trailsResults => {
+//       const trailSummaries = trailsResults.body.trails.map(hike => {
+//         let newTrail = new Trail(hike);
+//         newTrail.id = query.id;
+//         return newTrail;
+//       });
+//       response.send(trailSummaries);
+//     })
+//     .catch(error => handleError(error, response));
+// }
 
 function Trail(data) {
   this.name = data.name;
