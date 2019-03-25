@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS yelps (
   prices  VARCHAR(50),
   rating VARCHAR(50),
   url VARCHAR(244),
+  created_at VARCHAR(255),
   location_id INTEGER NOT NULL, 
   FOREIGN KEY (location_id) REFERENCES locations(id)
 );

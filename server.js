@@ -243,17 +243,12 @@ function Meetup(data) {
 //searchMovies function
 
 function searchMovies(request, response){
-  // let query = request.query.data;
-  // let sql = `SELECT * FROM movies WHERE location_id=$1;`;
-  // let values = [query.id];
 
-  // client
   let sqlInfo = {
     id: request.query.data.id,
     endpoint: 'movie',
   }
 
-  //.query(sql, values)
   getData(sqlInfo)
     .then(data => checkTimeouts(sqlInfo, data))
     .then(result => {
@@ -272,6 +267,7 @@ function searchMovies(request, response){
               newMovie.id=sqlInfo.id;
 
               let newSql = `INSERT INTO movies (title, released_on, total_votes, average_votes, popularity, image_url,overview, created_at, location_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);`;
+
               let newValues = Object.values(newMovie);
               client.query(newSql, newValues);
 
@@ -297,17 +293,26 @@ function Movie(data) {
 }
 
 function searchYelp(request, response){
-  let query = request.query.data;
-  let sql = `SELECT * FROM yelps WHERE location_id=$1`;
-  let values = [query.id];
+  // let query = request.query.data;
+  // let sql = `SELECT * FROM yelps WHERE location_id=$1`;
+  // let values = [query.id];
 
-  client
-    .query(sql,values)
+  // client
+  //   .query(sql,values)
+
+  let sqlInfo = {
+    id: request.query.data.id,
+    endpoint: 'yelp',
+  }
+
+  getData(sqlInfo)
+    .then(data => checkTimeouts(sqlInfo, data))
     .then(result =>{
-      if(result.rowCount > 0){
+      if(result){
         response.send(result.rows);
       }else{
         const url = `https://api.yelp.com/v3/businesses/search?latitude=${request.query.data.latitude}&longitude=${request.query.data.longitude}`;
+
         superagent
           .get(url)
           .set('Authorization',`Bearer ${process.env.YELP_API_KEY}`)
@@ -317,10 +322,12 @@ function searchYelp(request, response){
             } else {
               const yelpSummaries = yelpResults.body.businesses.map(business =>{
                 let newBusiness = new Yelp (business);
-                newBusiness.id = query.id;
-                let newSql = `INSERT INTO yelps (name, image, prices, rating, url, location_id) VALUES ($1, $2, $3, $4, $5, $6);`;
+                newBusiness.id = sqlInfo.id;
+                let newSql = `INSERT INTO yelps (name, image, prices, rating, url, created_at, location_id) VALUES ($1, $2, $3, $4, $5, $6, $7);`;
+
                 let newValues = Object.values(newBusiness);
                 client.query(newSql, newValues);
+
                 return newBusiness;
               });
               response.send(yelpSummaries);
@@ -337,6 +344,7 @@ function Yelp(data) {
   this.prices = data.price;
   this.rating = data.rating;
   this.url = data.url;
+  this.created_at = Date.now();
 }
 
 function searchTrails(request, response){
